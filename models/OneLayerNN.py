@@ -1,4 +1,3 @@
-
 import torch.nn as nn
 
 # Define a simple one-layer neural network
