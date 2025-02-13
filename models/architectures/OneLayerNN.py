@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 # Define a simple one-layer neural network
 class OneLayerNN(nn.Module):
     def __init__(self, input_dim, num_classes):

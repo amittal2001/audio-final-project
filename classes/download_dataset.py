@@ -3,16 +3,18 @@ import torchaudio
 from torch.utils.data import DataLoader, random_split
 
 
-
-class dataset():
-    def __init__(self, batch_size, split):
+class DataSet:
+    def __init__(self, batch_size, split, mfcc_transform, download=True):
         # Download and load the SpeechCommands dataset
-        dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", download=False)
+        dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", download=download)
 
         # Build a label-to-index mapping
         self.labels = sorted(list({datapoint[2] for datapoint in dataset}))
         self.label_to_index = {label: idx for idx, label in enumerate(self.labels)}
+        self.index_to_label = {idx: label for label, idx in self.label_to_index.items()}
         print("Detected labels:", self.labels)
+
+        self.mfcc_transform = mfcc_transform
 
         # Split dataset into training (70%) and testing (30%)
         self.train_size = int(split * len(dataset))
@@ -21,12 +23,9 @@ class dataset():
 
         def collate_fn(batch):
             """Process batch: extract MFCC features and map labels to indices."""
-            # Define an MFCC transform
-            mfcc_transform = torchaudio.transforms.MFCC(sample_rate=16000, n_mfcc=40)
-
             features, targets = [], []
             for waveform, sample_rate, label, *_ in batch:
-                mfcc = mfcc_transform(waveform).mean(dim=-1).squeeze(0)
+                mfcc = self.mfcc_transform(waveform).mean(dim=-1).squeeze(0)
                 features.append(mfcc)
                 targets.append(self.label_to_index[label])
             return torch.stack(features), torch.tensor(targets)

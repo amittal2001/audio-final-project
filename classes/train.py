@@ -1,8 +1,8 @@
 import torch
 
 
-class train():
-    def __init__(self, model, criterion, optimizer, device, num_epochs, train_loader, train_size, test_loader, test_size):
+class Train:
+    def __init__(self, model, model_path, criterion, optimizer, device, num_epochs, train_loader, train_size, test_loader, test_size):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -12,8 +12,10 @@ class train():
         self.train_size = train_size
         self.test_loader = test_loader
         self.test_size = test_size
+        self.model_path = model_path
 
     def train(self):
+        best_test_acc = 0.0
         for epoch in range(self.num_epochs):
             self.model.train()
             train_loss, train_corrects = 0.0, 0
@@ -41,5 +43,13 @@ class train():
             test_loss /= self.test_size
             test_acc = (test_corrects / self.test_size) * 100
 
-            print(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, "
-                  f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
+            print(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
+                  f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
+
+            # Save best model
+            if test_acc > best_test_acc:
+                best_test_acc = test_acc
+                torch.save(self.model.state_dict(), self.model_path)
+                print(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
+
+        print("Training completed. Best model saved at:", self.model_path)

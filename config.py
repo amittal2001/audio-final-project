@@ -1,0 +1,9 @@
+sample_rate = 16000
+n_mfcc = 40
+n_mels = 64
+n_fft = 512
+batch_size = 64
+split = 0.7
+input_dim = 40
+lr = 0.001
+num_epochs = 5
