@@ -12,7 +12,7 @@ class DataSet:
         self.labels = sorted(list({datapoint[2] for datapoint in dataset}))
         self.label_to_index = {label: idx for idx, label in enumerate(self.labels)}
         self.index_to_label = {idx: label for label, idx in self.label_to_index.items()}
-        print("Detected labels:", self.labels)
+        print("Dataset labels:", self.labels)
 
         self.mfcc_transform = mfcc_transform
 

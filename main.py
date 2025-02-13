@@ -28,7 +28,8 @@ optimizer = optim.Adam(model.parameters(), lr=lr)
 
 # Training and evaluation loop
 model_path = "models/weights/OneLayerNN.pth"
-record_path = "data/SpeechCommands/speech_commands_v0.02/forward/0a2b400e_nohash_2.wav"
+record_path = "data/SpeechCommands/speech_commands_v0.02/cat/0ab3b47d_nohash_1.wav"
+record_label = record_path.split("/")[3]
 
 training = Train(model=model, model_path=model_path, criterion=criterion, optimizer=optimizer, device=device,
                  num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
@@ -39,6 +40,4 @@ training.train()
 prediction = Predict(model_path=model_path, model=OneLayerNN, input_dim=input_dim, num_classes=len(dataset.labels),
                      device=device, mfcc_transform=mfcc_transform, index_to_label=dataset.index_to_label)
 
-prediction.predict(record_path)
-
-print("Finished.")
+prediction.predict(record_path, record_label)
