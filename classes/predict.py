@@ -3,9 +3,9 @@ import torchaudio
 
 
 class Predict:
-    def __init__(self, model_path, model, input_dim, num_classes, device, mfcc_transform, index_to_label):
+    def __init__(self, model_path, model, num_classes, device, mfcc_transform, index_to_label):
         """Load model weights and predict label for a given audio file."""
-        self.model = model(input_dim=input_dim, num_classes=num_classes).to(device)
+        self.model = model(num_classes=num_classes).to(device)
         self.model.load_state_dict(torch.load(model_path))
         self.device = device
         self.mfcc_transform = mfcc_transform
