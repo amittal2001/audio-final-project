@@ -1,5 +1,5 @@
 import torch
-
+import matplotlib.pyplot as plt
 
 class Train:
     def __init__(self, model, model_path, criterion, optimizer, device, num_epochs, train_loader, train_size, test_loader, test_size):
@@ -16,6 +16,8 @@ class Train:
 
     def train(self):
         best_test_acc = 0.0
+        train_losses, test_losses = [], []
+        train_accuracies, test_accuracies = [], []
         for epoch in range(self.num_epochs):
             self.model.train()
             train_loss, train_corrects = 0.0, 0
@@ -43,6 +45,11 @@ class Train:
             test_loss /= self.test_size
             test_acc = (test_corrects / self.test_size) * 100
 
+            train_losses.append(train_loss)
+            test_losses.append(test_loss)
+            train_accuracies.append(train_acc)
+            test_accuracies.append(test_acc)
+
             print(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
                   f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
 
@@ -52,4 +59,26 @@ class Train:
                 torch.save(self.model.state_dict(), self.model_path)
                 print(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
 
+        print("Training completed. Best model saved at:", self.model_path)
+
+        # Plot and save loss and accuracy graphs
+        plt.figure(figsize=(10, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(range(1, self.num_epochs+1), train_losses, label="Train Loss")
+        plt.plot(range(1, self.num_epochs+1), test_losses, label="Test Loss")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.title("Loss vs Epochs")
+
+        plt.subplot(1, 2, 2)
+        plt.plot(range(1, self.num_epochs+1), train_accuracies, label="Train Accuracy")
+        plt.plot(range(1, self.num_epochs+1), test_accuracies, label="Test Accuracy")
+        plt.xlabel("Epochs")
+        plt.ylabel("Accuracy (%)")
+        plt.legend()
+        plt.title("Accuracy vs Epochs")
+
+        modal_name = self.model_path.split("/")[2].split(".")[0]
+        plt.savefig(f"{modal_name}_training_metrics.png")
         print("Training completed. Best model saved at:", self.model_path)
