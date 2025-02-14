@@ -1,7 +1,10 @@
 sample_rate = 16000
-n_mfcc = 40
-n_mels = 64
-n_fft = 512
+n_mfcc = 12
+n_mels = 23
+n_fft = 1024
+hop_length = 0.01
+win_length = 0.03
+center = False
 batch_size = 64
 split = 0.8
 lr = 0.008

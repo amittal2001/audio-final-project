@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torchaudio
 
-from models.architectures.tinyspeech import QTinySpeechZ, TinySpeechZ
+from models.architectures.tinyspeech import TinySpeechZ
 from classes.download_dataset import DataSet
 from classes.train import Train
 from classes.predict import Predict
@@ -14,13 +12,13 @@ from config import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
-# Define an MFCC transform
-mfcc_transform = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=n_mfcc,
-                                            melkwargs={"n_mels": n_mels, "n_fft": n_fft})
-
-dataset = DataSet(batch_size=batch_size, split=split, mfcc_transform=mfcc_transform, download=False)
+dataset = DataSet(batch_size=batch_size, split=split, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
+                  win_length=win_length, n_mels=n_mels, center=center, sample_rate=sample_rate, download=False)
 
 print("Start training Tiny Speech Z model")
+model_name = "TinySpeechZ"
+record_path = "data/SpeechCommands/speech_commands_v0.02/cat/0ab3b47d_nohash_1.wav"
+record_label = record_path.split("/")[3]
 
 # Initialize model, loss function, and optimizer
 tiny_speech_z = TinySpeechZ(num_classes=len(dataset.labels)).to(device)
@@ -29,41 +27,16 @@ optimizer = torch.optim.SGD(tiny_speech_z.parameters(), lr=lr, momentum=momentum
 
 
 # Training and evaluation loop
-model_path = "models/weights/TinySpeechZ.pth"
-record_path = "data/SpeechCommands/speech_commands_v0.02/cat/0ab3b47d_nohash_1.wav"
-record_label = record_path.split("/")[3]
-
-training = Train(model=tiny_speech_z, model_path=model_path, criterion=criterion, optimizer=optimizer, device=device,
+training = Train(model=tiny_speech_z, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
                  num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
                  test_loader=dataset.test_loader, test_size=dataset.test_size)
 
 training.train()
 
-prediction = Predict(model_path=model_path, model=TinySpeechZ, num_classes=len(dataset.labels),
-                     device=device, mfcc_transform=mfcc_transform, index_to_label=dataset.index_to_label)
+prediction = Predict(model=tiny_speech_z, device=device, mfcc_transform=dataset.mfcc_transform,
+                     index_to_label=dataset.index_to_label, weights_path=f"models/weights/{model_name}.pth")
 
 prediction.predict(record_path, record_label)
 
-print("Start training Q Tiny Speech Z model")
+torch.cuda.empty_cache()
 
-# Initialize model, loss function, and optimizer
-q_tiny_speech_z = QTinySpeechZ(num_classes=len(dataset.labels)).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(q_tiny_speech_z.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
-
-
-# Training and evaluation loop
-model_path = "models/weights/QTinySpeechZ.pth"
-record_path = "data/SpeechCommands/speech_commands_v0.02/cat/0ab3b47d_nohash_1.wav"
-record_label = record_path.split("/")[3]
-
-training = Train(model=q_tiny_speech_z, model_path=model_path, criterion=criterion, optimizer=optimizer, device=device,
-                 num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
-                 test_loader=dataset.test_loader, test_size=dataset.test_size)
-
-training.train()
-
-prediction = Predict(model_path=model_path, model=QTinySpeechZ, num_classes=len(dataset.labels),
-                     device=device, mfcc_transform=mfcc_transform, index_to_label=dataset.index_to_label)
-
-prediction.predict(record_path, record_label)

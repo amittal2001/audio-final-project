@@ -2,7 +2,8 @@ import torch
 import matplotlib.pyplot as plt
 
 class Train:
-    def __init__(self, model, model_path, criterion, optimizer, device, num_epochs, train_loader, train_size, test_loader, test_size):
+    def __init__(self, model, model_name, criterion, optimizer, device,
+                 num_epochs, train_loader, train_size, test_loader, test_size):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -12,7 +13,8 @@ class Train:
         self.train_size = train_size
         self.test_loader = test_loader
         self.test_size = test_size
-        self.model_path = model_path
+        self.model_name = model_name
+        self.model_path = f"models/weights/{model_name}.pth"
 
     def train(self):
         best_test_acc = 0.0
@@ -56,10 +58,11 @@ class Train:
             # Save best model
             if test_acc > best_test_acc:
                 best_test_acc = test_acc
-                torch.save(self.model.state_dict(), self.model_path)
+                torch.save(self.model.state_dict(), f"models/weights/{self.model_name}.pth")
                 print(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
 
-        print("Training completed. Best model saved at:", self.model_path)
+            if (epoch + 1) % 10 == 0 or (epoch + 1) == self.num_epochs:
+                torch.save(self.model.state_dict(), f"models/weights/{self.model_name}_epoch_{(epoch + 1)}.pth")
 
         # Plot and save loss and accuracy graphs
         plt.figure(figsize=(10, 5))
@@ -79,6 +82,5 @@ class Train:
         plt.legend()
         plt.title("Accuracy vs Epochs")
 
-        modal_name = self.model_path.split("/")[2].split(".")[0]
-        plt.savefig(f"{modal_name}_training_metrics.png")
-        print("Training completed. Best model saved at:", self.model_path)
+        plt.savefig(f"{self.model_name}_training_metrics.png")
+        print("Training completed. Best model saved at:", self.model_name)
