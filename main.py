@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models.architectures.tinyspeech import TinySpeechZ
+from models.architectures.tinyspeech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
 from classes.download_dataset import DataSet
 from classes.train import Train
 from classes.predict import Predict
@@ -14,29 +14,39 @@ print("Using device:", device)
 
 dataset = DataSet(batch_size=batch_size, split=split, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
                   win_length=win_length, n_mels=n_mels, center=center, sample_rate=sample_rate, download=False)
+test_record_path = "test.wav"
+test_record_label = "cat"
 
-print("Start training Tiny Speech Z model")
-model_name = "TinySpeechZ"
-record_path = "data/SpeechCommands/speech_commands_v0.02/cat/0ab3b47d_nohash_1.wav"
-record_label = record_path.split("/")[3]
+models = {
+    "TinySpeechX": TinySpeechX,
+    "TinySpeechY": TinySpeechY,
+    "TinySpeechZ": TinySpeechZ,
+    "TinySpeechM": TinySpeechM
+}
+models_test_acc = ""
 
-# Initialize model, loss function, and optimizer
-tiny_speech_z = TinySpeechZ(num_classes=len(dataset.labels)).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(tiny_speech_z.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+for model_name, model_architectures in models.items():
+    print(f"Start training {model_name}")
+
+    # Initialize model, loss function, and optimizer
+    model = model_architectures(num_classes=len(dataset.labels)).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
 
-# Training and evaluation loop
-training = Train(model=tiny_speech_z, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
-                 num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
-                 test_loader=dataset.test_loader, test_size=dataset.test_size)
+    # Training and evaluation loop
+    training = Train(model=model, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
+                     num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
+                     test_loader=dataset.test_loader, test_size=dataset.test_size)
 
-training.train()
+    test_acc = training.train()
+    models_test_acc += f"For model {model_name} got maximum test accuracy of: {test_acc}\n"
 
-prediction = Predict(model=tiny_speech_z, device=device, mfcc_transform=dataset.mfcc_transform,
-                     index_to_label=dataset.index_to_label, weights_path=f"models/weights/{model_name}.pth")
+    prediction = Predict(model=model, device=device, mfcc_transform=dataset.mfcc_transform,
+                         index_to_label=dataset.index_to_label, weights_path=f"models/weights/{model_name}.pth")
 
-prediction.predict(record_path, record_label)
+    prediction.predict(test_record_path, test_record_label)
 
-torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
+print(f"TRAINING SUMMERY:\n{models_test_acc}")

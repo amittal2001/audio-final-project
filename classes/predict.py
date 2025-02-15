@@ -13,7 +13,7 @@ class Predict:
         self.mfcc_transform = mfcc_transform
         self.index_to_label = index_to_label
 
-    def predict(self, record_path, record_label):
+    def predict(self, record_path, record_label=None):
         self.model.eval()
 
         waveform, sample_rate = torchaudio.load(record_path)
@@ -31,7 +31,9 @@ class Predict:
             predicted_label = torch.argmax(output, dim=1).item()
 
         prediction = self.index_to_label[predicted_label]
-        if record_label == prediction:
+        if record_label is None:
+            print(f"For record: {record_path} predicted label {prediction}")
+        elif record_label == prediction:
             print(f"For record: {record_path} predicted label {prediction} right")
         else:
             print(f"For record: {record_path} predicted label {prediction} instead of {record_label}")

@@ -7,12 +7,13 @@ class DataSet:
     def __init__(self, batch_size, split, n_mfcc, n_fft, hop_length,
                   win_length, n_mels, center, sample_rate, download=True):
         # Download and load the SpeechCommands dataset
-        dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", download=download)
+        dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", url="speech_commands_v0.01", download=download)
 
         # Build a label-to-index mapping
         self.labels = sorted(list({datapoint[2] for datapoint in dataset}))
         self.label_to_index = {label: idx for idx, label in enumerate(self.labels)}
         self.index_to_label = {idx: label for label, idx in self.label_to_index.items()}
+        print(f"Dataset has {len(self.labels)} labels:", self.labels)
 
         self.mfcc_transform = torchaudio.transforms.MFCC(
             sample_rate=sample_rate,

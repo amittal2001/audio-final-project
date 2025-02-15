@@ -43,3 +43,17 @@ class Attn_BN_Block(nn.Module):
         x_ = self.layer4(x_)
         x_ += x
         return x_
+
+
+class Attn_Block(nn.Module):
+    def __init__(self, name, in_channels, mid_channels_0, out_channels_0, mid_channels_1, out_channels_1):
+        super(Attn_Block, self).__init__()
+        self.name = name
+        self.layer1 = AttentionCondenser(f"{self.name}_AttnCond1", in_channels, mid_channels_0, out_channels_0)
+        self.layer3 = AttentionCondenser(f"{self.name}_AttnCond2", in_channels, mid_channels_1, out_channels_1)
+
+    def forward(self, x):
+        x_ = self.layer1(x)
+        x_ = self.layer3(x_)
+        x_ += x
+        return x_
