@@ -26,7 +26,7 @@ models = {
 models_test_acc = ""
 
 for model_name, model_architectures in models.items():
-    print(f"Start training {model_name}")
+    print(f"\nStart training {model_name}")
 
     # Initialize model, loss function, and optimizer
     model = model_architectures(num_classes=len(dataset.labels)).to(device)
@@ -49,4 +49,4 @@ for model_name, model_architectures in models.items():
 
     torch.cuda.empty_cache()
 
-print(f"TRAINING SUMMERY:\n{models_test_acc}")
+print(f"\nTRAINING SUMMERY:\n{models_test_acc}")
