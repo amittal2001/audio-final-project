@@ -61,7 +61,7 @@ class Train:
                 torch.save(self.model.state_dict(), f"models/weights/{self.model_name}.pth")
                 print(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
 
-            if (epoch + 1) % 10 == 0 or (epoch + 1) == self.num_epochs:
+            if (epoch + 1) % 10 == 0:
                 torch.save(self.model.state_dict(), f"models/weights/{self.model_name}_epoch_{(epoch + 1)}.pth")
 
         # Plot and save loss and accuracy graphs
