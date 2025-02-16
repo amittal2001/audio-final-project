@@ -83,6 +83,6 @@ class Train:
         plt.title("Accuracy vs Epochs")
 
         plt.savefig(f"{self.model_name}_training_metrics.png")
-        print("Training completed. Best model saved at:", self.model_name)
+        print(f"Training completed. Best model saved at: models/weights/{self.model_name}.pth")
 
         return best_test_acc
