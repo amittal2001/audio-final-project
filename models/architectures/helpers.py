@@ -7,23 +7,21 @@ class AttentionCondenser(nn.Module):
     def __init__(self, name, in_channels, mid_channels, out_channels):
         super(AttentionCondenser, self).__init__()
         self.condense = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.group_conv = nn.Conv2d(in_channels, mid_channels, kernel_size=1, groups=1)
-        self.pointwise_conv = nn.Conv2d(mid_channels, out_channels, kernel_size=1)
-        self.scale = nn.Parameter(torch.Tensor(1))
-        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-        self.expand_conv = nn.Conv2d(out_channels, in_channels, kernel_size=1)
+        self.embedding1 = nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding="same")
+        self.embedding2 = nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding="same")
+        self.embedding3 = nn.Conv2d(out_channels, in_channels, kernel_size=3, padding="same")
+        self.expand = nn.Upsample(scale_factor=2, mode='nearest')
+        self.S = nn.Parameter(torch.Tensor(1))
         self.name = name
 
     def forward(self, x):
-        residual = x
-        Q = self.condense(x)
-        K = F.relu(self.group_conv(Q))
-        K = F.relu(self.pointwise_conv(K))
-        A = self.upsample(K)
-        A = self.expand_conv(A)
-        S = torch.sigmoid(A)
-        V_prime = residual * S * self.scale
-        V_prime += residual
+        V = x
+        Q = self.condense(V)
+        K_ = F.relu(self.embedding1(Q))
+        K_ = F.relu(self.embedding2(K_))
+        K = F.relu(self.embedding3(K_))
+        A = self.expand(K)
+        V_prime = V * self.S + A
         return V_prime
 
 
@@ -57,3 +55,5 @@ class Attn_Block(nn.Module):
         x_ = self.layer2(x_)
         x_ += x
         return x_
+
+
