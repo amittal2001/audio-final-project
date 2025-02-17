@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, random_split
 import torch.nn.functional as F
 
 class DataSet:
-    def __init__(self, batch_size, split, n_mfcc, n_fft, hop_length,
+    def __init__(self, batch_size, split, high_freq, low_freq, n_mfcc, n_fft, hop_length,
                   win_length, n_mels, center, sample_rate, download=True):
         # Download and load the SpeechCommands dataset
         dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", url="speech_commands_v0.01", download=download)
@@ -36,6 +36,7 @@ class DataSet:
             """Process batch: extract MFCC features and map labels to indices."""
             features, targets = [], []
             for waveform, sr, label, *_ in batch:
+                waveform = torchaudio.functional.bandpass_biquad(waveform, sample_rate, low_freq, high_freq)
                 waveform = waveform.squeeze()
                 if waveform.size(0) > sr:
                     waveform = waveform[:sr]

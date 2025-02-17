@@ -12,8 +12,7 @@ from config import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
-dataset = DataSet(batch_size=batch_size, split=split, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
-                  win_length=win_length, n_mels=n_mels, center=center, sample_rate=sample_rate, download=False)
+dataset = DataSet(batch_size=batch_size, split=split, high_freq=high_freq, low_freq=low_freq, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,win_length=win_length, n_mels=n_mels, center=center, sample_rate=sample_rate, download=False)
 test_record_path = "test.wav"
 test_record_label = "cat"
 

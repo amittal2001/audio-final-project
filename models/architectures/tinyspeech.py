@@ -6,17 +6,17 @@ class TinySpeechX(nn.Module):
         super(TinySpeechX, self).__init__()
         self.conv1 = nn.Conv2d(1, 15, kernel_size=3, stride=1, padding=1)
 
-        self.block1 = Attn_BN_Block("AttnCondBlock1", in_channels=15, mid_channels_0=30, out_channels_0=6,
+        self.block1 = Attn_Condenser_Block("AttnCondBlock1", in_channels=15, mid_channels_0=30, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=15)
-        self.block2 = Attn_BN_Block("AttnCondBlock2", in_channels=15, mid_channels_0=30, out_channels_0=6,
+        self.block2 = Attn_Condenser_Block("AttnCondBlock2", in_channels=15, mid_channels_0=30, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=15)
-        self.block3 = Attn_BN_Block("AttnCondBlock3", in_channels=15, mid_channels_0=30, out_channels_0=6,
+        self.block3 = Attn_Condenser_Block("AttnCondBlock3", in_channels=15, mid_channels_0=30, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=15)
-        self.block4 = Attn_BN_Block("AttnCondBlock4", in_channels=15, mid_channels_0=30, out_channels_0=19,
-                                    mid_channels_1=38, out_channels_1=15)
-        self.block5 = Attn_BN_Block("AttnCondBlock5", in_channels=15, mid_channels_0=30, out_channels_0=26,
-                                    mid_channels_1=52, out_channels_1=15)
-        self.block6 = Attn_BN_Block("AttnCondBlock6", in_channels=15, mid_channels_0=30, out_channels_0=18,
+        self.block4 = Attn_Condenser_Block("AttnCondBlock4", in_channels=15, mid_channels_0=30, out_channels_0=18,
+                                    mid_channels_1=36, out_channels_1=15)
+        self.block5 = Attn_Condenser_Block("AttnCondBlock5", in_channels=15, mid_channels_0=30, out_channels_0=27,
+                                    mid_channels_1=54, out_channels_1=15)
+        self.block6 = Attn_Condenser_Block("AttnCondBlock6", in_channels=15, mid_channels_0=30, out_channels_0=18,
                                     mid_channels_1=36, out_channels_1=15)
 
         self.conv2 = nn.Conv2d(in_channels=15, out_channels=38, kernel_size=3, stride=1, padding=1)
@@ -48,17 +48,17 @@ class TinySpeechY(nn.Module):
         super(TinySpeechY, self).__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=3, stride=1, padding=1)
 
-        self.block1 = Attn_BN_Block("AttnCondBlock1", in_channels=10, mid_channels_0=20, out_channels_0=6,
+        self.block1 = Attn_Condenser_Block("AttnCondBlock1", in_channels=10, mid_channels_0=20, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=10)
-        self.block2 = Attn_BN_Block("AttnCondBlock2", in_channels=10, mid_channels_0=20, out_channels_0=6,
+        self.block2 = Attn_Condenser_Block("AttnCondBlock2", in_channels=10, mid_channels_0=20, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=10)
-        self.block3 = Attn_BN_Block("AttnCondBlock3", in_channels=10, mid_channels_0=20, out_channels_0=6,
+        self.block3 = Attn_Condenser_Block("AttnCondBlock3", in_channels=10, mid_channels_0=20, out_channels_0=6,
                                     mid_channels_1=12, out_channels_1=10)
-        self.block4 = Attn_BN_Block("AttnCondBlock4", in_channels=10, mid_channels_0=20, out_channels_0=19,
-                                    mid_channels_1=38, out_channels_1=10)
-        self.block5 = Attn_BN_Block("AttnCondBlock5", in_channels=10, mid_channels_0=20, out_channels_0=26,
+        self.block4 = Attn_Condenser_Block("AttnCondBlock4", in_channels=10, mid_channels_0=20, out_channels_0=18,
+                                    mid_channels_1=36, out_channels_1=10)
+        self.block5 = Attn_Condenser_Block("AttnCondBlock5", in_channels=10, mid_channels_0=20, out_channels_0=26,
                                     mid_channels_1=52, out_channels_1=10)
-        self.block6 = Attn_BN_Block("AttnCondBlock6", in_channels=10, mid_channels_0=20, out_channels_0=18,
+        self.block6 = Attn_Condenser_Block("AttnCondBlock6", in_channels=10, mid_channels_0=20, out_channels_0=18,
                                     mid_channels_1=36, out_channels_1=10)
 
         self.conv2 = nn.Conv2d(in_channels=10, out_channels=6, kernel_size=3, stride=1, padding=1)
@@ -90,17 +90,17 @@ class TinySpeechZ(nn.Module):
         super(TinySpeechZ, self).__init__()
         self.conv1 = nn.Conv2d(1, 7, kernel_size=3, stride=1, padding=1)
 
-        self.block1 = Attn_BN_Block("AttnCondBlock1", in_channels=7, mid_channels_0=14, out_channels_0=3,
+        self.block1 = Attn_Condenser_Block("AttnCondBlock1", in_channels=7, mid_channels_0=14, out_channels_0=3,
                                     mid_channels_1=6, out_channels_1=7)
-        self.block2 = Attn_BN_Block("AttnCondBlock2", in_channels=7, mid_channels_0=14, out_channels_0=3,
+        self.block2 = Attn_Condenser_Block("AttnCondBlock2", in_channels=7, mid_channels_0=14, out_channels_0=3,
                                     mid_channels_1=6, out_channels_1=7)
-        self.block3 = Attn_BN_Block("AttnCondBlock3", in_channels=7, mid_channels_0=14, out_channels_0=2,
+        self.block3 = Attn_Condenser_Block("AttnCondBlock3", in_channels=7, mid_channels_0=14, out_channels_0=2,
                                     mid_channels_1=4, out_channels_1=7)
-        self.block4 = Attn_BN_Block("AttnCondBlock4", in_channels=7, mid_channels_0=14, out_channels_0=11,
+        self.block4 = Attn_Condenser_Block("AttnCondBlock4", in_channels=7, mid_channels_0=14, out_channels_0=11,
                                     mid_channels_1=22, out_channels_1=7)
-        self.block5 = Attn_BN_Block("AttnCondBlock5", in_channels=7, mid_channels_0=14, out_channels_0=14,
+        self.block5 = Attn_Condenser_Block("AttnCondBlock5", in_channels=7, mid_channels_0=14, out_channels_0=14,
                                     mid_channels_1=28, out_channels_1=7)
-        self.block6 = Attn_BN_Block("AttnCondBlock6", in_channels=7, mid_channels_0=14, out_channels_0=10,
+        self.block6 = Attn_Condenser_Block("AttnCondBlock6", in_channels=7, mid_channels_0=14, out_channels_0=10,
                                     mid_channels_1=20, out_channels_1=7)
 
         self.conv2 = nn.Conv2d(in_channels=7, out_channels=17, kernel_size=3, stride=1, padding=1)
@@ -132,12 +132,12 @@ class TinySpeechM(nn.Module):
         super(TinySpeechM, self).__init__()
         self.conv1 = nn.Conv2d(1, 9, kernel_size=3, stride=1, padding=1)
 
-        self.block1 = Attn_Block("AttnCondBlock1", in_channels=9, mid_channels_0=18, out_channels_0=6,
-                                    mid_channels_1=12, out_channels_1=9)
-        self.block2 = Attn_Block("AttnCondBlock2", in_channels=9, mid_channels_0=18, out_channels_0=9,
-                                    mid_channels_1=18, out_channels_1=9)
-        self.block3 = Attn_Block("AttnCondBlock3", in_channels=9, mid_channels_0=18, out_channels_0=8,
-                                    mid_channels_1=16, out_channels_1=9)
+        self.block1 = Attn_Condenser_Block("AttnCondBlock1", in_channels=9, mid_channels_0=18, out_channels_0=6,
+                                    mid_channels_1=12, out_channels_1=9, batch_norm=False)
+        self.block2 = Attn_Condenser_Block("AttnCondBlock2", in_channels=9, mid_channels_0=18, out_channels_0=9,
+                                    mid_channels_1=18, out_channels_1=9, batch_norm=False)
+        self.block3 = Attn_Condenser_Block("AttnCondBlock3", in_channels=9, mid_channels_0=18, out_channels_0=8,
+                                    mid_channels_1=16, out_channels_1=9, batch_norm=False)
 
         self.conv2 = nn.Conv2d(in_channels=9, out_channels=40, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
