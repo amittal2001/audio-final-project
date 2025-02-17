@@ -40,7 +40,7 @@ for model_name, model_architectures in models.items():
                      test_loader=dataset.test_loader, test_size=dataset.test_size)
 
     test_acc = training.train()
-    models_test_acc += f"For model {model_name} got maximum test accuracy of: {test_acc}\n"
+    models_test_acc += f"For model {model_name} got maximum test accuracy of: {test_acc: .2f}%\n"
 
     prediction = Predict(model=model, device=device, mfcc_transform=dataset.mfcc_transform,
                          index_to_label=dataset.index_to_label, weights_path=f"models/weights/{model_name}.pth")
