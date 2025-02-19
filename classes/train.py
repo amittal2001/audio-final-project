@@ -35,6 +35,10 @@ class Train:
             train_loss /= self.train_size
             train_acc = (train_corrects / self.train_size) * 100
 
+            if torch.isnan(torch.tensor(train_loss)):
+                print("NaN detected, stopping training")
+                return None
+
             self.model.eval()
             test_loss, test_corrects = 0.0, 0
             with torch.no_grad():

@@ -27,18 +27,32 @@ models_test_acc = ""
 for model_name, model_architectures in models.items():
     print(f"\nStart training {model_name}")
 
-    # Initialize model, loss function, and optimizer
-    model = model_architectures(num_classes=len(dataset.labels)).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    training_attempt = 0
+    failed = False
+    while training_attempt < 5:
+        # Initialize model, loss function, and optimizer
+        model = model_architectures(num_classes=len(dataset.labels)).to(device)
+        criterion = nn.CrossEntropyLoss()
+        #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
+        # Training and evaluation loop
+        training = Train(model=model, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
+                         num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
+                         test_loader=dataset.test_loader, test_size=dataset.test_size)
 
-    # Training and evaluation loop
-    training = Train(model=model, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
-                     num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
-                     test_loader=dataset.test_loader, test_size=dataset.test_size)
+        test_acc = training.train()
+        training_attempt += 1
+        if test_acc is not None:
+            break
+        if training_attempt == 5:
+            print("Failed to train this model")
+            failed = True
+        print("Encounter nan loss. Start again")
+    if failed:
+        continue
 
-    test_acc = training.train()
     models_test_acc += f"For model {model_name} got maximum test accuracy of: {test_acc: .2f}%\n"
 
     prediction = Predict(model=model, device=device, mfcc_transform=dataset.mfcc_transform,
