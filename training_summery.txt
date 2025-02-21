@@ -1,0 +1,4 @@
+For model TinySpeechX with 32816 parameters got maximum test accuracy of:  51.94%
+For model TinySpeechY with 23876 parameters got maximum test accuracy of:  41.82%
+For model TinySpeechZ with 7442 parameters got maximum test accuracy of:  41.65%
+For model TinySpeechM with 8770 parameters got maximum test accuracy of:  3.45%

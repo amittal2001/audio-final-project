@@ -1,4 +1,4 @@
-from models.architectures.helpers import *
+from models.architectures.attn_condenser import *
 
 
 class TinySpeechX(nn.Module):
