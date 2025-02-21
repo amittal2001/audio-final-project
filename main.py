@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import random
 import numpy as np
+import os
 
 from models.architectures.tiny_speech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
 from classes.download_dataset import DataSet
@@ -12,13 +13,18 @@ from config import *
 
 
 def set_seed(seed):
-    torch.manual_seed(seed)  # Set seed for CPU
-    torch.cuda.manual_seed(seed)  # Set seed for the current GPU
-    torch.cuda.manual_seed_all(seed)  # Set seed for all GPUs (if using multi-GPU)
-    np.random.seed(seed)  # Set seed for NumPy
-    random.seed(seed)  # Set seed for Python's built-in random module
-    torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior in cuDNN
-    torch.backends.cudnn.benchmark = False  # Disable optimization that may introduce randomness
+    #os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    #torch.use_deterministic_algorithms(True)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    deterministic_generator = torch.Generator().manual_seed(seed)
+    return deterministic_generator
 
 
 def init_weights(m):
@@ -28,25 +34,26 @@ def init_weights(m):
             torch.init.zeros_(m.bias)
 
 
+generator = set_seed(seed)
+
 # Check for GPU support
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
-dataset = DataSet(batch_size=batch_size, split=split, high_freq=high_freq, low_freq=low_freq, n_mfcc=n_mfcc, n_fft=n_fft,
-                  hop_length=hop_length, win_length=win_length, n_mels=n_mels, center=center, sample_rate=sample_rate, download=False)
+dataset = DataSet(batch_size=batch_size, split=split, high_freq=high_freq, low_freq=low_freq, n_mfcc=n_mfcc,
+                  n_fft=n_fft, hop_length=hop_length, win_length=win_length, n_mels=n_mels,
+                  center=center, sample_rate=sample_rate, generator=generator, download=False)
 
 test_record_path = "test.wav"
 test_record_label = "cat"
 
 models = {
+    "TinySpeechM": TinySpeechM,
     "TinySpeechX": TinySpeechX,
     "TinySpeechY": TinySpeechY,
     "TinySpeechZ": TinySpeechZ,
-    "TinySpeechM": TinySpeechM
 }
 summery = ""
-
-set_seed(seed)
 
 for model_name, model_architectures in models.items():
     print(f"\nStart training {model_name}")
@@ -59,7 +66,7 @@ for model_name, model_architectures in models.items():
         criterion = nn.CrossEntropyLoss()
         #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         init_weights(model.parameters())
 
         # Training and evaluation loop

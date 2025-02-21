@@ -3,9 +3,10 @@ import torchaudio
 from torch.utils.data import DataLoader, random_split
 import torch.nn.functional as F
 
+
 class DataSet:
     def __init__(self, batch_size, split, high_freq, low_freq, n_mfcc, n_fft, hop_length,
-                  win_length, n_mels, center, sample_rate, download=True):
+                  win_length, n_mels, center, sample_rate, generator, download=True):
         # Download and load the SpeechCommands dataset
         dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", url="speech_commands_v0.01", download=download)
 
@@ -30,7 +31,8 @@ class DataSet:
         # Split dataset into training and testing
         self.train_size = int(split * len(dataset))
         self.test_size = len(dataset) - self.train_size
-        train_dataset, test_dataset = random_split(dataset, [self.train_size, self.test_size])
+
+        train_dataset, test_dataset = random_split(dataset, [self.train_size, self.test_size], generator=generator)
 
         def collate_fn(batch):
             """Process batch: extract MFCC features and map labels to indices."""
@@ -49,5 +51,7 @@ class DataSet:
             return torch.stack(features), torch.tensor(targets)
 
         # Create DataLoaders
-        self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+        self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn,
+                                       num_workers=0,  generator=generator)
+        self.test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn,
+                                      num_workers=0,  generator=generator)
