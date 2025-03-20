@@ -22,7 +22,7 @@ class TinySpeechX(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=15, out_channels=38, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(38, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def __str__(self):
         return "TinySpeechX"
@@ -39,7 +39,7 @@ class TinySpeechX(nn.Module):
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        x = self.softmax(x)
+        # x = self.softmax(x)
         return x
 
 
@@ -64,7 +64,7 @@ class TinySpeechY(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=10, out_channels=6, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(6, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def __str__(self):
         return "TinySpeechY"
@@ -81,7 +81,7 @@ class TinySpeechY(nn.Module):
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        x = self.softmax(x)
+        # x = self.softmax(x)
         return x
 
 
@@ -106,7 +106,7 @@ class TinySpeechZ(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=7, out_channels=17, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(17, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def __str__(self):
         return "TinySpeechZ"
@@ -123,7 +123,7 @@ class TinySpeechZ(nn.Module):
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        x = self.softmax(x)
+        # x = self.softmax(x)
         return x
 
 
@@ -142,7 +142,7 @@ class TinySpeechM(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=9, out_channels=40, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(40, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1)
 
     def __str__(self):
         return "TinySpeechM"
@@ -156,5 +156,5 @@ class TinySpeechM(nn.Module):
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-        x = self.softmax(x)
+        # x = self.softmax(x)
         return x
