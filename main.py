@@ -26,7 +26,7 @@ def set_seed(seed: int):
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
-    #torch.use_deterministic_algorithms(True)
+    # torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     deterministic_generator = torch.Generator().manual_seed(seed)
@@ -79,44 +79,37 @@ def main():
 
     for model_name, model_architectures in models.items():
         print(f"\nStart training {model_name}")
-        training_attempt = 0
-        failed = False
-        while training_attempt < 5:
-            # Initialize model, loss function, and optimizer
-            model = model_architectures(num_classes=len(dataset.labels)).to(device)
-            model_param = sum(p.numel() for p in model.parameters())
-            criterion = nn.CrossEntropyLoss()
-            #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
-            optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-            #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            """
-            init_weights(model.parameters())
-            This is problematic because the function expects a module.
-            but you're passing an iterator over parameters.
-            As a result, your custom initialization isn’t applied at all.
-            """
-            model.apply(init_weights)
 
-            # Training and evaluation loop
-            training = Train(model=model, model_name=model_name, criterion=criterion, optimizer=optimizer, device=device,
-                             num_epochs=num_epochs, train_loader=dataset.train_loader, train_size=dataset.train_size,
-                             test_loader=dataset.test_loader, test_size=dataset.test_size)
+        # Initialize model, loss function, and optimizer
+        model = model_architectures(num_classes=len(dataset.labels)).to(device)
+        model_param = sum(p.numel() for p in model.parameters())
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+        #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
-            test_acc = training.train()
-            training_attempt += 1
-            if test_acc is not None:
-                break
-            if training_attempt == 5:
-                print("Failed to train this model")
-                failed = True
-            print("Encounter nan loss. Start again")
-        if failed:
-            continue
+        model.apply(init_weights)
+
+        training = Train(model=model,
+                         model_name=model_name,
+                         criterion=criterion,
+                         optimizer=optimizer,
+                         device=device,
+                         num_epochs=num_epochs,
+                         train_loader=dataset.train_loader,
+                         train_size=dataset.train_size,
+                         test_loader=dataset.test_loader,
+                         test_size=dataset.test_size)
+
+        test_acc = training.train()
 
         summery += f"For model {model_name} with {model_param} parameters got maximum test accuracy of: {test_acc: .2f}%\n"
 
-        prediction = Predict(model=model, device=device, mfcc_transform=dataset.mfcc_transform,
-                             index_to_label=dataset.index_to_label, weights_path=f"models/weights/{model_name}.pth")
+        prediction = Predict(model=model,
+                             device=device,
+                             mfcc_transform=dataset.mfcc_transform,
+                             index_to_label=dataset.index_to_label,
+                             weights_path=f"models/weights/{model_name}.pth")
 
         prediction.predict(test_record_path, test_record_label)
 
@@ -129,3 +122,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
