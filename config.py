@@ -13,10 +13,11 @@ center = False
 # data
 split = 0.8
 batch_size = 64
-num_epochs = 50
+num_epochs = 5
 
 # learning
 lr = 0.001
+patience = 4
 momentum = 0.9
 weight_decay = 0.01
 
