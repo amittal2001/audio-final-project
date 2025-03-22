@@ -1,10 +1,10 @@
-import torch
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import os
 from torch.utils.tensorboard import SummaryWriter
+import matplotlib.pyplot as plt
+from config import patience
+from tqdm import tqdm
+import torch
 import sys
-
+import os
 
 class Train:
     """
@@ -21,9 +21,17 @@ class Train:
     :param test_loader: DataLoader for the test dataset.
     :param test_size: Number of samples in the test dataset.
     """
-
-    def __init__(self, model, model_name, criterion, optimizer, device,
-                 num_epochs, train_loader, train_size, test_loader, test_size):
+    def __init__(self,
+                 model,
+                 model_name,
+                 criterion,
+                 optimizer,
+                 device,
+                 num_epochs,
+                 train_loader,
+                 train_size,
+                 test_loader,
+                 test_size):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -34,7 +42,30 @@ class Train:
         self.test_loader = test_loader
         self.test_size = test_size
         self.model_name = model_name
-        # The final model path will be updated in train() using the professional run name
+
+    def _init_tensorboard(self):
+        """
+        Initializes TensorBoard logging: sets up hyperparameters,
+        constructs a run name, creates model weight paths, and returns the SummaryWriter and run name.
+        """
+        hparams = {
+            "lr": self.optimizer.param_groups[0]['lr'],
+            "batch_size": self.train_loader.batch_size,
+            "num_epochs": self.num_epochs,
+            "weight_decay": self.optimizer.param_groups[0].get('weight_decay', 0),
+            "model": self.model_name
+        }
+        # Create a run name based on hyperparameters
+        run_name = f"{hparams['model']}_lr{hparams['lr']}_bs{hparams['batch_size']}_ep{hparams['num_epochs']}_wd{hparams['weight_decay']}"
+        # Update model path using the professional run name
+        self.model_path = os.path.join("models", "weights", f"{run_name}.pth")
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+
+        # Set up TensorBoard SummaryWriter
+        log_dir = os.path.join("runs", run_name)
+        writer = SummaryWriter(log_dir=log_dir)
+        writer.add_hparams(hparams, {"hparam/accuracy": 0})
+        return writer, run_name
 
     def train(self):
         """
@@ -47,7 +78,6 @@ class Train:
         train_accuracies, test_accuracies = [], []
 
         # Early stopping parameters
-        early_stop_patience = 5  # Stop training if no improvement in this many epochs
         early_stop_counter = 0
         best_val_loss = float('inf')
 
@@ -56,25 +86,9 @@ class Train:
             self.optimizer, mode='min', factor=0.5, patience=2, verbose=True
         )
 
-        # Define hyperparameters for run naming
-        hparams = {
-            "lr": self.optimizer.param_groups[0]['lr'],
-            "batch_size": self.train_loader.batch_size,
-            "num_epochs": self.num_epochs,
-            "weight_decay": self.optimizer.param_groups[0].get('weight_decay', 0),
-            "model": self.model_name
-        }
-        # Create a professional run name based on hyperparameters
-        run_name = f"{hparams['model']}_lr{hparams['lr']}_bs{hparams['batch_size']}_ep{hparams['num_epochs']}_wd{hparams['weight_decay']}"
-        # Update model path using the professional run name
-        self.model_path = os.path.join("models", "weights", f"{run_name}.pth")
-        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        writer, run_name = self._init_tensorboard()
 
-        # Set up TensorBoard SummaryWriter
-        log_dir = os.path.join("runs", run_name)
-        writer = SummaryWriter(log_dir=log_dir)
-        writer.add_hparams(hparams, {"hparam/accuracy": 0})
-
+        # --------------- Training Loop --------------- #
         for epoch in range(self.num_epochs):
             self.model.train()
             train_loss, train_corrects = 0.0, 0
@@ -90,11 +104,11 @@ class Train:
                 features, targets = features.to(self.device), targets.to(self.device)
                 self.optimizer.zero_grad()
 
-                # Forward pass
+                # Forward pass ->
                 outputs = self.model(features)
                 loss = self.criterion(outputs, targets)
 
-                # Backward pass and optimization
+                # Backward pass and optimization <-
                 loss.backward()
                 self.optimizer.step()
 
@@ -114,7 +128,7 @@ class Train:
                 writer.close()
                 return None
 
-            # Evaluation phase (without gradient updates)
+            # --------------- Evaluation phase --------------- #
             self.model.eval()
             test_loss, test_corrects = 0.0, 0
 
@@ -123,7 +137,6 @@ class Train:
                     features, targets = features.to(self.device), targets.to(self.device)
                     outputs = self.model(features)
                     loss = self.criterion(outputs, targets)
-
                     test_loss += loss.item() * features.size(0)
                     test_corrects += (outputs.argmax(dim=1) == targets).sum().item()
 
@@ -131,7 +144,7 @@ class Train:
             test_loss /= self.test_size
             test_acc = (test_corrects / self.test_size) * 100
 
-            # Store metrics for plotting later
+            # Store metrics for plotting
             train_losses.append(train_loss)
             test_losses.append(test_loss)
             train_accuracies.append(train_acc)
@@ -147,8 +160,8 @@ class Train:
 
             # Print epoch summary
             tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "
-                  f"Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
-                  f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
+                       f"Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
+                       f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
 
             # Early stopping: check if test loss improved
             if test_loss < best_val_loss:
@@ -157,20 +170,15 @@ class Train:
             else:
                 early_stop_counter += 1
                 print(f"No improvement in test loss for {early_stop_counter} epoch(s).")
-                if early_stop_counter >= early_stop_patience:
+                if early_stop_counter >= patience:
                     print("Early stopping triggered.")
                     break
 
-            # Save the best model based on test accuracy
+            # Save the best model based on test accuracy (over-saving)
             if test_acc > best_test_acc:
                 best_test_acc = test_acc
                 torch.save(self.model.state_dict(), self.model_path)
                 tqdm.write(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
-
-            # Save model weights every 10 epochs as a checkpoint
-            if (epoch + 1) % 10 == 0:
-                checkpoint_path = os.path.join("models", "weights", f"{run_name}_epoch_{epoch + 1}.pth")
-                torch.save(self.model.state_dict(), checkpoint_path)
 
         # Plot and save loss/accuracy graphs after training
         self.plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies, run_name)
@@ -180,14 +188,14 @@ class Train:
         return best_test_acc
 
     @staticmethod
-    def plot_metrics(self, train_losses, test_losses, train_accuracies, test_accuracies, run_name):
+    def plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies, run_name):
         """
         Plots loss and accuracy trends over epochs and saves the plot as an image.
-
-        :param train_losses: List of training losses per epoch.
-        :param test_losses: List of test losses per epoch.
-        :param train_accuracies: List of training accuracies per epoch.
-        :param test_accuracies: List of test accuracies per epoch.
+        :param train_losses: List of training losses.
+        :param test_losses: List of test losses.
+        :param train_accuracies: List of training accuracies.
+        :param test_accuracies: List of test accuracies.
+        :param run_name: The run name string used for file naming.
         """
         epochs = range(1, len(train_losses) + 1)
         plt.figure(figsize=(12, 5))
@@ -213,4 +221,4 @@ class Train:
         # Save plot using the professional naming scheme
         plot_path = f"{run_name}_training_metrics.png"
         plt.savefig(plot_path)
-        tqdm.write(f"Training metrics saved as: {plot_path}")
+        print(f"Training metrics saved as: {plot_path}")
