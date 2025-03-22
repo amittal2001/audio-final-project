@@ -4,9 +4,9 @@ import random
 import torch
 import torchaudio
 from classes.dataset import DataSet
-from models.architectures.tiny_speech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
+from models.architectures.tinyspeech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
 from classes.predict import Predict
-from config import *
+from config import seed, batch_size, split, high_freq, low_freq, n_mfcc, n_fft, hop_length, win_length, n_mels, center, sample_rate
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained model on audio recordings.")
@@ -20,7 +20,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Instantiate dataset to retrieve the MFCC transform and label mapping
+    # Instantiate dataset to retrieve the MFCC transform and label mapping.
     generator = torch.Generator().manual_seed(seed)
     dataset = DataSet(batch_size=batch_size,
                       split=split,
@@ -36,7 +36,7 @@ def main():
                       generator=generator,
                       download=False)
 
-    # Select model architecture based on input argument
+    # Select model architecture based on input argument.
     if args.model == 'TinySpeechX':
         model_class = TinySpeechX
     elif args.model == 'TinySpeechY':
@@ -48,7 +48,7 @@ def main():
 
     model = model_class(num_classes=len(dataset.labels)).to(device)
 
-    # Initialize the prediction object with loaded weights
+    # Initialize the prediction object with loaded weights.
     predictor = Predict(model=model,
                         device=device,
                         mfcc_transform=dataset.mfcc_transform,
@@ -56,27 +56,32 @@ def main():
                         weights_path=args.weights)
 
     if args.file:
-        # Evaluate a specific audio file
+        # Evaluate a specific audio file.
         predictor.predict(args.file, record_label=args.label)
     else:
-        # Evaluate 10 random recordings from the SpeechCommands dataset
-        print("Evaluating on 10 random recordings from the test dataset...")
+        # Evaluate 10 random recordings from the SpeechCommands dataset.
+        print("Evaluating 10 random recordings from the test dataset...")
         full_dataset = torchaudio.datasets.SPEECHCOMMANDS(root="./data", url="speech_commands_v0.01", download=False)
         indices = list(range(len(full_dataset)))
         random.shuffle(indices)
         evaluated = 0
+        correct = 0
         for idx in indices:
             if evaluated >= 10:
                 break
             sample = full_dataset[idx]
             waveform, sr, label, *_ = sample
-            # Save the waveform to a temporary file for prediction
+            # Save waveform to a temporary file for evaluation.
             temp_file = "temp_eval.wav"
             torchaudio.save(temp_file, waveform, sr)
-            print(f"Evaluating sample with true label: {label}")
-            predictor.predict(temp_file, record_label=label)
+            print(f"Processing sample with true label: '\033[1m{label}\033[0m'.")
+            prediction = predictor.predict(temp_file, record_label=label)
+            if prediction == label:
+                correct += 1
             evaluated += 1
             os.remove(temp_file)
+        overall_accuracy = (correct / evaluated) * 100
+        print(f"Overall accuracy on 10 random samples: \033[1m{correct}/{evaluated}\033[0m ({overall_accuracy:.2f}%).")
 
 if __name__ == "__main__":
     main()
