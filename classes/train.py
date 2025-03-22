@@ -61,10 +61,8 @@ class Train:
         self.model_path = os.path.join("models", "weights", f"{run_name}.pth")
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
 
-        # Set up TensorBoard SummaryWriter
         log_dir = os.path.join("runs", run_name)
         writer = SummaryWriter(log_dir=log_dir)
-        writer.add_hparams(hparams, {"hparam/accuracy": 0})
         return writer, run_name
 
     def train(self):
@@ -82,9 +80,7 @@ class Train:
         best_val_loss = float('inf')
 
         # Set up dynamic learning rate scheduler
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode='min', factor=0.5, patience=2, verbose=True
-        )
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
 
         writer, run_name = self._init_tensorboard()
 
@@ -156,7 +152,7 @@ class Train:
             writer.add_scalar("Accuracy/train", train_acc, epoch)
             writer.add_scalar("Accuracy/val", test_acc, epoch)
 
-            scheduler.step(test_loss)
+            # scheduler.step(test_loss)
 
             # Print epoch summary
             tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "

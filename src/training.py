@@ -4,7 +4,7 @@ import random
 import torch
 import os
 
-from models.architectures.tiny_speech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
+from models.architectures.tinyspeech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
 from classes.dataset import DataSet
 from classes.train import Train
 from config import *
@@ -74,6 +74,7 @@ def train_models():
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+        # optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
         model.apply(init_weights)
 
