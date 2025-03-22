@@ -1,6 +1,8 @@
 import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import os
+from torch.utils.tensorboard import SummaryWriter
 import sys
 
 
@@ -32,19 +34,46 @@ class Train:
         self.test_loader = test_loader
         self.test_size = test_size
         self.model_name = model_name
-        self.model_path = f"models/weights/{model_name}.pth"
+        # The final model path will be updated in train() using the professional run name
 
     def train(self):
         """
-        Trains the model and evaluates it on the test dataset after each epoch.
-        Saves the best-performing model based on test accuracy.
-        Also logs loss and accuracy, and saves training plots.
-
-        :return: Best test accuracy achieved during training.
+        Trains the model, evaluates on the test dataset after each epoch,
+        and stops early if performance does not improve.
+        Also logs loss and accuracy to TensorBoard and saves training plots.
         """
         best_test_acc = 0.0
         train_losses, test_losses = [], []
         train_accuracies, test_accuracies = [], []
+
+        # Early stopping parameters
+        early_stop_patience = 5  # Stop training if no improvement in this many epochs
+        early_stop_counter = 0
+        best_val_loss = float('inf')
+
+        # Set up dynamic learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, mode='min', factor=0.5, patience=2, verbose=True
+        )
+
+        # Define hyperparameters for run naming
+        hparams = {
+            "lr": self.optimizer.param_groups[0]['lr'],
+            "batch_size": self.train_loader.batch_size,
+            "num_epochs": self.num_epochs,
+            "weight_decay": self.optimizer.param_groups[0].get('weight_decay', 0),
+            "model": self.model_name
+        }
+        # Create a professional run name based on hyperparameters
+        run_name = f"{hparams['model']}_lr{hparams['lr']}_bs{hparams['batch_size']}_ep{hparams['num_epochs']}_wd{hparams['weight_decay']}"
+        # Update model path using the professional run name
+        self.model_path = os.path.join("models", "weights", f"{run_name}.pth")
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+
+        # Set up TensorBoard SummaryWriter
+        log_dir = os.path.join("runs", run_name)
+        writer = SummaryWriter(log_dir=log_dir)
+        writer.add_hparams(hparams, {"hparam/accuracy": 0})
 
         for epoch in range(self.num_epochs):
             self.model.train()
@@ -82,6 +111,7 @@ class Train:
 
             if torch.isnan(torch.tensor(train_loss)):
                 tqdm.write("NaN detected, stopping training.")
+                writer.close()
                 return None
 
             # Evaluation phase (without gradient updates)
@@ -101,16 +131,35 @@ class Train:
             test_loss /= self.test_size
             test_acc = (test_corrects / self.test_size) * 100
 
-            # Store training/testing losses and accuracies
+            # Store metrics for plotting later
             train_losses.append(train_loss)
             test_losses.append(test_loss)
             train_accuracies.append(train_acc)
             test_accuracies.append(test_acc)
 
+            # Log scalar metrics to TensorBoard
+            writer.add_scalar("Loss/train", train_loss, epoch)
+            writer.add_scalar("Loss/val", test_loss, epoch)
+            writer.add_scalar("Accuracy/train", train_acc, epoch)
+            writer.add_scalar("Accuracy/val", test_acc, epoch)
+
+            scheduler.step(test_loss)
+
             # Print epoch summary
             tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "
                   f"Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
                   f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
+
+            # Early stopping: check if test loss improved
+            if test_loss < best_val_loss:
+                best_val_loss = test_loss
+                early_stop_counter = 0
+            else:
+                early_stop_counter += 1
+                print(f"No improvement in test loss for {early_stop_counter} epoch(s).")
+                if early_stop_counter >= early_stop_patience:
+                    print("Early stopping triggered.")
+                    break
 
             # Save the best model based on test accuracy
             if test_acc > best_test_acc:
@@ -120,16 +169,18 @@ class Train:
 
             # Save model weights every 10 epochs as a checkpoint
             if (epoch + 1) % 10 == 0:
-                checkpoint_path = f"models/weights/{self.model_name}_epoch_{epoch + 1}.pth"
+                checkpoint_path = os.path.join("models", "weights", f"{run_name}_epoch_{epoch + 1}.pth")
                 torch.save(self.model.state_dict(), checkpoint_path)
 
         # Plot and save loss/accuracy graphs after training
-        self.plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies)
+        self.plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies, run_name)
+        writer.close()
 
         tqdm.write(f"Training completed. Best model saved at: {self.model_path}")
         return best_test_acc
 
-    def plot_metrics(self, train_losses, test_losses, train_accuracies, test_accuracies):
+    @staticmethod
+    def plot_metrics(self, train_losses, test_losses, train_accuracies, test_accuracies, run_name):
         """
         Plots loss and accuracy trends over epochs and saves the plot as an image.
 
@@ -138,7 +189,7 @@ class Train:
         :param train_accuracies: List of training accuracies per epoch.
         :param test_accuracies: List of test accuracies per epoch.
         """
-        epochs = range(1, self.num_epochs + 1)
+        epochs = range(1, len(train_losses) + 1)
         plt.figure(figsize=(12, 5))
 
         # Plot Loss
@@ -159,7 +210,7 @@ class Train:
         plt.legend()
         plt.title("Accuracy vs Epochs")
 
-        # Save plot
-        plot_path = f"{self.model_name}_training_metrics.png"
+        # Save plot using the professional naming scheme
+        plot_path = f"{run_name}_training_metrics.png"
         plt.savefig(plot_path)
         tqdm.write(f"Training metrics saved as: {plot_path}")

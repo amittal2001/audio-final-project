@@ -12,7 +12,6 @@ from classes.predict import Predict
 from config import *
 
 
-
 def set_seed(seed: int):
     """
     Sets the random seed for Python, NumPy, and PyTorch (CPU & GPU) to ensure reproducibility.
@@ -66,9 +65,6 @@ def main():
                       generator=generator,
                       download=False)
 
-    test_record_path = "test.wav"
-    test_record_label = "cat"
-
     models = {
         "TinySpeechX": TinySpeechX,
         "TinySpeechY": TinySpeechY,
@@ -105,14 +101,6 @@ def main():
 
         summery += f"For model {model_name} with {model_param} parameters got maximum test accuracy of: {test_acc: .2f}%\n"
 
-        prediction = Predict(model=model,
-                             device=device,
-                             mfcc_transform=dataset.mfcc_transform,
-                             index_to_label=dataset.index_to_label,
-                             weights_path=f"models/weights/{model_name}.pth")
-
-        prediction.predict(test_record_path, test_record_label)
-
         torch.cuda.empty_cache()
 
     print(f"\nTRAINING SUMMERY:\n{summery}")
@@ -122,6 +110,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
