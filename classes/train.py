@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import sys
 
 
 class Train:
@@ -53,7 +54,8 @@ class Train:
                                     desc=f"Epoch {epoch + 1}/{self.num_epochs}",
                                     leave=True,
                                     dynamic_ncols=True,
-                                    bar_format="{l_bar}{bar:30}{r_bar}")
+                                    bar_format="{l_bar}{bar:30}{r_bar}",
+                                    file=sys.stdout)
 
             for features, targets in train_loader_bar:
                 features, targets = features.to(self.device), targets.to(self.device)
@@ -72,14 +74,14 @@ class Train:
                 train_corrects += (outputs.argmax(dim=1) == targets).sum().item()
 
                 # Update progress bar with loss info
-                train_loader_bar.set_postfix(loss=f"{loss.item():.4f}")
+                train_loader_bar.set_postfix(loss=f"{loss.item(): .4f}")
 
             # Compute epoch-level training metrics
             train_loss /= self.train_size
             train_acc = (train_corrects / self.train_size) * 100
 
             if torch.isnan(torch.tensor(train_loss)):
-                print("NaN detected, stopping training.")
+                tqdm.write("NaN detected, stopping training.")
                 return None
 
             # Evaluation phase (without gradient updates)
@@ -106,15 +108,15 @@ class Train:
             test_accuracies.append(test_acc)
 
             # Print epoch summary
-            print(f"[Epoch {epoch + 1}/{self.num_epochs}] "
-                  f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, "
-                  f"Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
+            tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "
+                  f"Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
+                  f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
 
             # Save the best model based on test accuracy
             if test_acc > best_test_acc:
                 best_test_acc = test_acc
                 torch.save(self.model.state_dict(), self.model_path)
-                print(f"\nNew best model saved with Test Accuracy: {best_test_acc:.2f}%")
+                tqdm.write(f"New best model saved with Test Accuracy: {best_test_acc: .2f}%")
 
             # Save model weights every 10 epochs as a checkpoint
             if (epoch + 1) % 10 == 0:
@@ -124,7 +126,7 @@ class Train:
         # Plot and save loss/accuracy graphs after training
         self.plot_metrics(train_losses, test_losses, train_accuracies, test_accuracies)
 
-        print(f"Training completed. Best model saved at: {self.model_path}")
+        tqdm.write(f"Training completed. Best model saved at: {self.model_path}")
         return best_test_acc
 
     def plot_metrics(self, train_losses, test_losses, train_accuracies, test_accuracies):
@@ -160,4 +162,4 @@ class Train:
         # Save plot
         plot_path = f"{self.model_name}_training_metrics.png"
         plt.savefig(plot_path)
-        print(f"Training metrics saved as: {plot_path}")
+        tqdm.write(f"Training metrics saved as: {plot_path}")

@@ -64,28 +64,28 @@ def main():
                       center=center,
                       sample_rate=sample_rate,
                       generator=generator,
-                      download=True)
+                      download=False)
 
     test_record_path = "test.wav"
     test_record_label = "cat"
 
     models = {
         "TinySpeechX": TinySpeechX,
-        "TinySpeechM": TinySpeechM,
         "TinySpeechY": TinySpeechY,
         "TinySpeechZ": TinySpeechZ,
+        "TinySpeechM": TinySpeechM,
     }
     summery = ""
 
     for model_name, model_architectures in models.items():
-        print(f"\nStart training {model_name}")
-
         # Initialize model, loss function, and optimizer
         model = model_architectures(num_classes=len(dataset.labels)).to(device)
         model_param = sum(p.numel() for p in model.parameters())
+        print(f"\nStart training {model_name} with {model_param} parameters")
+
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-        #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+        #optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
         #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
         model.apply(init_weights)

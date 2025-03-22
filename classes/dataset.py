@@ -4,7 +4,6 @@ import torch
 import torchaudio
 from torch.utils.data import DataLoader, random_split
 import torch.nn.functional as F
-from tqdm import tqdm
 
 
 class DataSet:

@@ -27,14 +27,16 @@ class Predict:
         mfcc = mfcc.unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            output = self.model(mfcc)
-            predicted_label = torch.argmax(output, dim=1).item()
+            logits = self.model(mfcc)
+            probs = F.softmax(logits, dim=1)
+            predicted_label = torch.argmax(probs, dim=1).item()
+            predicted_prob = probs[0, predicted_label].item() * 100
 
         prediction = self.index_to_label[predicted_label]
         if record_label is None:
-            print(f"For record: {record_path} predicted label {prediction}")
+            print(f"For record: {record_path} predicted label {prediction} with probability: {predicted_prob: .2f}%")
         elif record_label == prediction:
-            print(f"For record: {record_path} predicted label {prediction} right")
+            print(f"For record: {record_path} predicted label {prediction} with probability: {predicted_prob: .2f}% right")
         else:
-            print(f"For record: {record_path} predicted label {prediction} instead of {record_label}")
+            print(f"For record: {record_path} predicted label {prediction} with probability: {predicted_prob: .2f}% instead of {record_label}")
         return prediction
