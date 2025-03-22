@@ -12,7 +12,7 @@ center = False
 
 # data
 split = 0.8
-batch_size = 256
+batch_size = 64
 num_epochs = 50
 
 # learning
