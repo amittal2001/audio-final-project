@@ -35,11 +35,11 @@ def main():
         if args.no_seed:
             new_argv.append("--no-seed")
         sys.argv = new_argv
-        training.main()
+        training.train_models()
 
     elif args.command == "eval":
         # Import the evaluation module from src and rebuild sys.argv for it.
-        from src import eval as eval_module
+        from src import evaluation as eval_module
         new_argv = [sys.argv[0],
                     "--weights", args.weights,
                     "--model", args.model]
