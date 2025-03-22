@@ -4,8 +4,18 @@ import torch.nn.functional as F
 
 
 class Predict:
+    """
+    Class for loading model weights and performing inference on a given audio file.
+    """
     def __init__(self, model, device, mfcc_transform, index_to_label, weights_path=None):
-        """Load model weights and predict label for a given audio file."""
+        """
+        Initializes the Predict class by optionally loading model weights.
+        :param model: The neural network model used for predictions.
+        :param device: CPU or GPU
+        :param mfcc_transform: Transformation module to compute MFCC features.
+        :param index_to_label: Mapping from numeric indices to string labels.
+        :param weights_path: Path to the saved model weights. Defaults to None.
+        """
         self.model = model
         if weights_path is not None:
             self.model.load_state_dict(torch.load(weights_path))
@@ -14,6 +24,13 @@ class Predict:
         self.index_to_label = index_to_label
 
     def predict(self, record_path, record_label=None):
+        """
+        Predicts the label of a given audio file using the loaded model.
+        :param record_path: The file path to the audio recording.
+        :param record_label:  true label of the audio (for verification). Defaults to None.
+
+        :return: The predicted label.
+        """
         self.model.eval()
 
         waveform, sample_rate = torchaudio.load(record_path)
