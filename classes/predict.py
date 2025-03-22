@@ -1,6 +1,7 @@
 import torch
 import torchaudio
 import torch.nn.functional as F
+from config import low_freq, high_freq
 
 
 class Predict:
@@ -34,6 +35,7 @@ class Predict:
         self.model.eval()
 
         waveform, sample_rate = torchaudio.load(record_path)
+        waveform = torchaudio.functional.bandpass_biquad(waveform, sample_rate, low_freq, high_freq)
         waveform = waveform.squeeze()
         if waveform.size(0) > sample_rate:
             waveform = waveform[:sample_rate]
