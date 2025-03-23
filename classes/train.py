@@ -80,7 +80,7 @@ class Train:
         best_val_loss = float('inf')
 
         # Set up dynamic learning rate scheduler
-        # scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
 
         writer, run_name = self._init_tensorboard()
 
@@ -152,7 +152,7 @@ class Train:
             writer.add_scalar("Accuracy/train", train_acc, epoch)
             writer.add_scalar("Accuracy/val", test_acc, epoch)
 
-            # scheduler.step(test_loss)
+            scheduler.step(test_loss)
 
             # Print epoch summary
             tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "
