@@ -4,6 +4,7 @@ import torch
 import torchaudio
 from torch.utils.data import DataLoader, random_split
 import torch.nn.functional as F
+from classes.filtered_dataset import SpeechCommandsDataset
 
 
 class DataSet:
@@ -46,12 +47,17 @@ class DataSet:
         os.makedirs(data_dir, exist_ok=True)
 
         print("Loading SpeechCommands dataset...")
-        dataset = torchaudio.datasets.SPEECHCOMMANDS(root=data_dir, url="speech_commands_v0.01", download=download)
+        #dataset = torchaudio.datasets.SPEECHCOMMANDS(root=data_dir, url="speech_commands_v0.01", download=download)
+        DATASET_DIR = "speech_commands"
+        filtered_dataset_dir = os.path.join(DATASET_DIR, "filtered")
+        dataset = SpeechCommandsDataset(root_dir=filtered_dataset_dir)
         print(f"Dataset loaded with {len(dataset)} samples.")
 
         # Build a label-to-index mapping
-        self.labels = sorted(list({datapoint[2] for datapoint in dataset}))
-        self.label_to_index = {label: idx for idx, label in enumerate(self.labels)}
+        self.labels = ["yes", "no", "up", "down", "left", "right", "on", "off", "stop", "go", "unknown", "silence"]
+        self.label_to_index = {label: i for i, label in enumerate(self.labels)}
+        #self.labels = sorted(list({datapoint[1] for datapoint in dataset}))
+        #self.label_to_index = {label: idx for idx, label in enumerate(self.labels)}
         self.index_to_label = {idx: label for label, idx in self.label_to_index.items()}
         print(f"Dataset contains {len(self.labels)} unique labels:", self.labels)
 
@@ -81,21 +87,21 @@ class DataSet:
             :return: Tuple of (features, targets) tensors.
             """
             features, targets = [], []
-            for waveform, sr, label, *_ in batch:
+            for waveform, label in batch:
                 waveform = torchaudio.functional.bandpass_biquad(waveform, sample_rate, low_freq, high_freq)
                 waveform = waveform.squeeze()
 
                 # Pad or truncate to 1 second
-                if waveform.size(0) > sr:
-                    waveform = waveform[:sr]
+                if waveform.size(0) > sample_rate:
+                    waveform = waveform[:sample_rate]
                 else:
-                    waveform = F.pad(waveform, (0, sr - waveform.size(0)))
+                    waveform = F.pad(waveform, (0, sample_rate - waveform.size(0)))
 
                 # Add channel dimension
                 waveform = waveform.unsqueeze(0)
                 mfcc = self.mfcc_transform(waveform)
                 features.append(mfcc)
-                targets.append(self.label_to_index[label])
+                targets.append(label)
 
             return torch.stack(features), torch.tensor(targets)
 

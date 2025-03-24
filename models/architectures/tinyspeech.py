@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.architectures.AttnCondenserBlock import AttnCondenserBlock
@@ -32,14 +31,14 @@ class TinySpeechX(nn.Module):
         return "TinySpeechX"
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = F.leaky_relu(self.conv1(x))
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
         x = self.block4(x)
         x = self.block5(x)
         x = self.block6(x)
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -59,14 +58,14 @@ class TinySpeechY(nn.Module):
 
     def __init__(self, num_classes):
         super(TinySpeechY, self).__init__()
-        self.conv1 = nn.Conv2d(1, 10, kernel_size=3, stride=1, padding=1)
-        self.block1 = AttnCondenserBlock("AttnCondBlock1", 10, 20, 6, 12, 10)
-        self.block2 = AttnCondenserBlock("AttnCondBlock2", 10, 20, 6, 12, 10)
-        self.block3 = AttnCondenserBlock("AttnCondBlock3", 10, 20, 6, 12, 10)
-        self.block4 = AttnCondenserBlock("AttnCondBlock4", 10, 20, 19, 38, 10)
-        self.block5 = AttnCondenserBlock("AttnCondBlock5", 10, 20, 26, 52, 10)
-        self.block6 = AttnCondenserBlock("AttnCondBlock6", 10, 20, 18, 36, 10)
-        self.conv2 = nn.Conv2d(10, 6, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(1, 15, kernel_size=3, stride=1, padding=1)
+        self.block1 = AttnCondenserBlock("AttnCondBlock1", 15, 30, 6, 12, 15)
+        self.block2 = AttnCondenserBlock("AttnCondBlock2", 15, 30, 6, 12, 15)
+        self.block3 = AttnCondenserBlock("AttnCondBlock3", 15, 30, 6, 12, 15)
+        self.block4 = AttnCondenserBlock("AttnCondBlock4", 15, 30, 19, 38, 15)
+        self.block5 = AttnCondenserBlock("AttnCondBlock5", 15, 30, 26, 52, 15)
+        self.block6 = AttnCondenserBlock("AttnCondBlock6", 15, 30, 18, 36, 15)
+        self.conv2 = nn.Conv2d(15, 6, kernel_size=3, stride=1, padding=1)
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(6, num_classes)
 
@@ -74,14 +73,14 @@ class TinySpeechY(nn.Module):
         return "TinySpeechY"
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = F.leaky_relu(self.conv1(x))
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
         x = self.block4(x)
         x = self.block5(x)
         x = self.block6(x)
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -116,14 +115,14 @@ class TinySpeechZ(nn.Module):
         return "TinySpeechZ"
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = F.leaky_relu(self.conv1(x))
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
         x = self.block4(x)
         x = self.block5(x)
         x = self.block6(x)
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -157,11 +156,11 @@ class TinySpeechM(nn.Module):
         return "TinySpeechM"
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
+        x = F.leaky_relu(self.conv1(x))
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.global_pool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)

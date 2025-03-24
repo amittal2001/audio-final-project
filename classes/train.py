@@ -155,7 +155,7 @@ class Train:
             scheduler.step(test_loss)
 
             # Print epoch summary
-            tqdm.write(f"[Epoch {epoch + 1}/{self.num_epochs}] "
+            tqdm.write(f"Epoch {epoch + 1}/{self.num_epochs} "
                        f"Train Loss: {train_loss: .4f}, Train Acc: {train_acc: .2f}%, "
                        f"Test Loss: {test_loss: .4f}, Test Acc: {test_acc: .2f}%")
 

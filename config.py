@@ -13,13 +13,13 @@ center = False
 # data
 split = 0.8
 batch_size = 64
-num_epochs = 55
+num_epochs = 50
 
 # learning
-lr = 0.001
+lr = 0.01
 patience = 5
 momentum = 0.9
-weight_decay = 0.01
+weight_decay = 0.0
 
 # seed
 seed = 1000

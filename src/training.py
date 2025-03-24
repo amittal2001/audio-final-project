@@ -58,7 +58,7 @@ def train_models():
                       center=center,
                       sample_rate=sample_rate,
                       generator=generator,
-                      download=False)
+                      download=True)
 
     models = {
         "TinySpeechX": TinySpeechX,
@@ -73,8 +73,8 @@ def train_models():
         print(f"\nStart training {model_name} with {model_param} parameters")
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum)
-        # optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+        #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
         model.apply(init_weights)
 
