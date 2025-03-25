@@ -1,11 +1,12 @@
 import os
-import zipfile
 import shutil
 import random
 import wget
+import tarfile
+import uuid
+
 import torchaudio
 from torch.utils.data import Dataset, DataLoader
-import torch
 
 # Constants
 DATASET_URL = "http://download.tensorflow.org/data/speech_commands_v0.02.tar.gz"
@@ -32,7 +33,6 @@ if not os.path.exists(filtered_dataset_dir):
 
     # Extract dataset if not already extracted
     if not os.path.exists(extracted_path):
-        import tarfile
         print("\nExtracting dataset...")
         with tarfile.open(archive_path, "r:gz") as tar:
             tar.extractall(extracted_path)
@@ -54,8 +54,6 @@ if not os.path.exists(filtered_dataset_dir):
     all_words = os.listdir(extracted_path)
     extra_words = [w for w in all_words if os.path.isdir(os.path.join(extracted_path, w)) and w not in TARGET_LABELS]
 
-    # Move a subset of "unknown" words (random selection)
-    import uuid
     # Move a subset of "unknown" words (random selection)
     for word in random.sample(extra_words, min(5, len(extra_words))):  # Select up to 5 extra words
         word_path = os.path.join(extracted_path, word)

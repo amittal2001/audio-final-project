@@ -112,6 +112,11 @@ class Train:
                 train_loss += loss.item() * features.size(0)
                 train_corrects += (outputs.argmax(dim=1) == targets).sum().item()
 
+                if torch.isnan(torch.tensor(train_loss)):
+                    tqdm.write("NaN detected, stopping training.")
+                    writer.close()
+                    return None
+
                 # Update progress bar with loss info
                 train_loader_bar.set_postfix(loss=f"{loss.item(): .4f}")
 
@@ -119,10 +124,7 @@ class Train:
             train_loss /= self.train_size
             train_acc = (train_corrects / self.train_size) * 100
 
-            if torch.isnan(torch.tensor(train_loss)):
-                tqdm.write("NaN detected, stopping training.")
-                writer.close()
-                return None
+
 
             # --------------- Evaluation phase --------------- #
             self.model.eval()
@@ -152,7 +154,7 @@ class Train:
             writer.add_scalar("Accuracy/train", train_acc, epoch)
             writer.add_scalar("Accuracy/val", test_acc, epoch)
 
-            scheduler.step(test_loss)
+            scheduler.step()
 
             # Print epoch summary
             tqdm.write(f"Epoch {epoch + 1}/{self.num_epochs} "

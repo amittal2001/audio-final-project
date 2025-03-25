@@ -68,28 +68,36 @@ def train_models():
     }
 
     for model_name, model_architecture in models.items():
-        model = model_architecture(num_classes=len(dataset.labels)).to(device)
-        model_param = sum(p.numel() for p in model.parameters())
-        print(f"\nStart training {model_name} with {model_param} parameters")
+        experiement = 0
+        while experiement < 5:
+            model = model_architecture(num_classes=len(dataset.labels)).to(device)
+            model_param = sum(p.numel() for p in model.parameters())
+            print(f"\nStart training {model_name} with {model_param} parameters")
 
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
-        #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+            criterion = nn.CrossEntropyLoss()
+            optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+            #optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
-        model.apply(init_weights)
+            model.apply(init_weights)
 
-        training = Train(model=model,
-                         model_name=model_name,
-                         criterion=criterion,
-                         optimizer=optimizer,
-                         device=device,
-                         num_epochs=num_epochs,
-                         train_loader=dataset.train_loader,
-                         train_size=dataset.train_size,
-                         test_loader=dataset.test_loader,
-                         test_size=dataset.test_size)
+            training = Train(model=model,
+                             model_name=model_name,
+                             criterion=criterion,
+                             optimizer=optimizer,
+                             device=device,
+                             num_epochs=num_epochs,
+                             train_loader=dataset.train_loader,
+                             train_size=dataset.train_size,
+                             test_loader=dataset.test_loader,
+                             test_size=dataset.test_size)
 
-        test_acc = training.train()
-        print(f"The model {model_name} achieved maximum test accuracy of: {test_acc:.2f}%\n")
+            test_acc = training.train()
+            experiement += 1
+            if test_acc is not None:
+                break
+            print("Encounter None loss, try again")
+
+
+        print(f"The model {model_name} achieved maximum test accuracy of: {test_acc: .2f}%\n")
 
         torch.cuda.empty_cache()
