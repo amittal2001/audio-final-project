@@ -1,66 +1,106 @@
-from config import low_freq, high_freq
-
-import torch.nn.functional as F
-import torchaudio
 import torch
+import torchaudio
+from config import high_freq, low_freq
 
 
 class Predict:
     """
-    Class for loading model weights and performing inference on a given audio file.
+    Class for evaluating a trained model on audio recordings.
+
+    Attributes:
+        model (torch.nn.Module): The PyTorch model to be evaluated.
+        device (torch.device): Device (CPU or GPU) to perform inference.
+        mfcc_transform (torch.nn.Module): Transformation to convert raw audio to MFCC features.
+        index_to_label (dict): Mapping from numerical class indices to string labels.
+        weights_path (str): Path to the model weights file.
     """
 
-    def __init__(self, model, device, mfcc_transform, index_to_label, weights_path=None):
+    def __init__(self, model, device, mfcc_transform, index_to_label, weights_path):
         """
-        Initializes the Predict class by optionally loading model weights.
-        :param model: The neural network model used for predictions.
-        :param device: Device to use (CPU or GPU).
-        :param mfcc_transform: Transformation module to compute MFCC features.
-        :param index_to_label: Mapping from numeric indices to string labels.
-        :param weights_path: Path to the saved model weights. Defaults to None.
+        Initializes the predictor with the given model, loads the saved weights, and sets the model
+        to evaluation mode.
+
+        Args:
+            model (torch.nn.Module): The model architecture.
+            device (torch.device): The device for running inference.
+            mfcc_transform (torch.nn.Module): The MFCC transform used for feature extraction.
+            index_to_label (dict): Dictionary to map model output indices to label strings.
+            weights_path (str): Path to the saved model weights.
         """
         self.model = model
-        if weights_path is not None:
-            self.model.load_state_dict(torch.load(weights_path))
         self.device = device
         self.mfcc_transform = mfcc_transform
         self.index_to_label = index_to_label
+        self.weights_path = weights_path
 
-    def predict(self, record_path, record_label=None):
-        """
-        Predicts the label of a given audio file using the loaded model.
-        :param record_path: The file path to the audio recording.
-        :param record_label: The true label of the audio (for verification). Defaults to None.
-        :return: The predicted label.
-        """
+        # Load the model weights
+        state_dict = torch.load(weights_path, map_location=device)
+        self.model.load_state_dict(state_dict)
+        self.model.to(self.device)
         self.model.eval()
 
-        waveform, sample_rate = torchaudio.load(record_path)
-        # Apply bandpass filtering as done in training.
-        waveform = torchaudio.functional.bandpass_biquad(waveform, sample_rate, low_freq, high_freq)
+    def preprocess_waveform(self, waveform, sr):
+        # Apply bandpass filter
+        waveform = torchaudio.functional.bandpass_biquad(waveform, sr, low_freq, high_freq)
+
+        # Squeeze to remove extra dimensions
         waveform = waveform.squeeze()
-        if waveform.size(0) > sample_rate:
-            waveform = waveform[:sample_rate]
+
+        # Pad or truncate to exactly 1 second (assuming sample_rate is defined)
+        if waveform.size(0) > sr:
+            waveform = waveform[:sr]
         else:
-            waveform = F.pad(waveform, (0, sample_rate - waveform.size(0)))
-        waveform = waveform.unsqueeze(0)
+            waveform = torch.nn.functional.pad(waveform, (0, sr - waveform.size(0)))
+        waveform = waveform.unsqueeze(0)  # make it [1, samples]
+        return waveform
+
+    def predict(self, audio_file, record_label=None):
+        """
+        Predicts the label for a given audio file.
+
+        Steps:
+          1. Loads the audio file using torchaudio.
+          2. If the audio has more than one channel, it is averaged to mono.
+          3. Applies the MFCC transform to extract features.
+          4. Adds the batch dimension and performs inference.
+          5. Maps the model's output index to the corresponding label.
+          6. Optionally prints the ground-truth label if provided.
+
+        Args:
+            audio_file (str): Path to the audio file to be evaluated.
+            record_label (str, optional): (Optional) The ground-truth label for logging purposes.
+
+        Returns:
+            str: The predicted label as determined by the model.
+        """
+        # Load the audio file
+        waveform, sr = torchaudio.load(audio_file)
+
+        # Average channels if necessary
+        if waveform.size(0) > 1:
+            waveform = waveform.mean(dim=0, keepdim=True)
+
+        # Preprocess waveform: bandpass filter and pad/truncate
+        waveform = self.preprocess_waveform(waveform, sr)
+
+        # Compute MFCC features using the provided transform.
         mfcc = self.mfcc_transform(waveform)
+
+        # Normalize MFCC in the same way as training
+        mfcc = (mfcc - mfcc.mean()) / (mfcc.std() + 1e-6)
+
+        # Add batch dimension and move to device
         mfcc = mfcc.unsqueeze(0).to(self.device)
 
+        # Perform inference without gradient tracking.
         with torch.no_grad():
-            logits = self.model(mfcc)
-            probs = F.softmax(logits, dim=1)
-            predicted_index = torch.argmax(probs, dim=1).item()
-            confidence = probs[0, predicted_index].item() * 100
+            outputs = self.model(mfcc)
+            prediction_idx = outputs.argmax(dim=1).item()
 
-        prediction = self.index_to_label[predicted_index]
-        if record_label is None:
-            print(
-                f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
-        elif record_label == prediction:
-            print(
-                f"File '{record_path}': Correct prediction. Label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
-        else:
-            print(
-                f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m, expected '\033[1m{record_label}\033[0m'.")
-        return prediction
+        predicted_label = self.index_to_label[prediction_idx]
+        print(f"Predicted label: {predicted_label}")
+
+        if record_label is not None:
+            print(f"Ground-truth label: {record_label}")
+
+        return predicted_label
