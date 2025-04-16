@@ -42,12 +42,7 @@ class DataSet:
                  generator,
                  download=True):
 
-        # Ensure the data folder exists
-        data_dir = os.path.join(".", "data")
-        os.makedirs(data_dir, exist_ok=True)
-
         print("Loading SpeechCommands dataset...")
-        #dataset = torchaudio.datasets.SPEECHCOMMANDS(root=data_dir, url="speech_commands_v0.01", download=download)
         DATASET_DIR = "speech_commands"
         filtered_dataset_dir = os.path.join(DATASET_DIR, "filtered")
         dataset = SpeechCommandsDataset(root_dir=filtered_dataset_dir)
