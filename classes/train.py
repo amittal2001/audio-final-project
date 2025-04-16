@@ -1,10 +1,12 @@
 from torch.utils.tensorboard import SummaryWriter
-import matplotlib.pyplot as plt
 from config import patience
 from tqdm import tqdm
+
+import matplotlib.pyplot as plt
 import torch
 import sys
 import os
+
 
 class Train:
     """
@@ -21,6 +23,7 @@ class Train:
     :param test_loader: DataLoader for the test dataset.
     :param test_size: Number of samples in the test dataset.
     """
+
     def __init__(self,
                  model,
                  model_name,
@@ -31,7 +34,8 @@ class Train:
                  train_loader,
                  train_size,
                  test_loader,
-                 test_size):
+                 test_size,
+                 name_suffix=""):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -42,6 +46,7 @@ class Train:
         self.test_loader = test_loader
         self.test_size = test_size
         self.model_name = model_name
+        self.name_suffix = name_suffix
 
     def _init_tensorboard(self):
         """
@@ -57,6 +62,9 @@ class Train:
         }
         # Create a run name based on hyperparameters
         run_name = f"{hparams['model']}_lr{hparams['lr']}_bs{hparams['batch_size']}_ep{hparams['num_epochs']}_wd{hparams['weight_decay']}"
+        if self.name_suffix:
+            run_name += f"_{self.name_suffix}"
+
         # Update model path using the professional run name
         self.model_path = os.path.join("models", "weights", f"{run_name}.pth")
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
@@ -80,7 +88,8 @@ class Train:
         best_val_loss = float('inf')
 
         # Set up dynamic learning rate scheduler
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
+        # scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.95)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=0.9, patience=3)
 
         writer, run_name = self._init_tensorboard()
 
@@ -124,8 +133,6 @@ class Train:
             train_loss /= self.train_size
             train_acc = (train_corrects / self.train_size) * 100
 
-
-
             # --------------- Evaluation phase --------------- #
             self.model.eval()
             test_loss, test_corrects = 0.0, 0
@@ -154,7 +161,7 @@ class Train:
             writer.add_scalar("Accuracy/train", train_acc, epoch)
             writer.add_scalar("Accuracy/val", test_acc, epoch)
 
-            scheduler.step()
+            scheduler.step(test_loss)
 
             # Print epoch summary
             tqdm.write(f"Epoch {epoch + 1}/{self.num_epochs} "
@@ -216,7 +223,6 @@ class Train:
         plt.legend()
         plt.title("Accuracy vs Epochs")
 
-        # Save plot using the professional naming scheme
         plot_path = f"{run_name}_training_metrics.png"
         plt.savefig(plot_path)
         print(f"Training metrics saved as: {plot_path}")

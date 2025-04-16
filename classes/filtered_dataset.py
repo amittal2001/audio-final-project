@@ -81,7 +81,7 @@ if not os.path.exists(filtered_dataset_dir):
     shutil.rmtree(extracted_path)
     os.remove(archive_path)
 
-print("\n✅ Dataset filtered and stored in:", filtered_dataset_dir)
+print("\n Dataset filtered and stored in:", filtered_dataset_dir)
 
 
 # PyTorch Dataset Class

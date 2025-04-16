@@ -1,7 +1,7 @@
 # Audio
 sample_rate = 16000
-n_mfcc = 12
-n_mels = 23
+n_mfcc = 13
+n_mels = 40
 n_fft = 1024
 hop_length = 0.01
 win_length = 0.03
@@ -17,7 +17,7 @@ num_epochs = 50
 
 # learning
 lr = 0.01
-patience = 5
+patience = 10
 momentum = 0.9
 weight_decay = 0.0
 

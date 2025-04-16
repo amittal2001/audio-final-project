@@ -1,10 +1,10 @@
-import os
-
-import torch
-import torchaudio
-from torch.utils.data import DataLoader, random_split
-import torch.nn.functional as F
 from classes.filtered_dataset import SpeechCommandsDataset
+from torch.utils.data import DataLoader, random_split
+
+import torch.nn.functional as F
+import torchaudio
+import torch
+import os
 
 
 class DataSet:
@@ -81,25 +81,38 @@ class DataSet:
 
         def collate_fn(batch):
             """
-            Processes a batch by extracting MFCC features and converting labels to indices.
-
-            :param batch: List of (waveform, sample_rate, label, ...) tuples.
+            Processes a batch by applying augmentation, extracting MFCC features, and converting labels to indices.
+            :param batch: List of (waveform, label) tuples.
             :return: Tuple of (features, targets) tensors.
             """
             features, targets = [], []
             for waveform, label in batch:
+                # Apply bandpass filter
                 waveform = torchaudio.functional.bandpass_biquad(waveform, sample_rate, low_freq, high_freq)
                 waveform = waveform.squeeze()
 
-                # Pad or truncate to 1 second
+                # Simple Augmentations
+                # Time shift (up to ±1000 samples)
+                shift_amt = torch.randint(-1000, 1000, (1,)).item()
+                waveform = torch.roll(waveform, shifts=shift_amt)
+
+                # Random gain
+                gain = torch.empty(1).uniform_(0.8, 1.2).item()
+                waveform = waveform * gain
+
+                # Pad or truncate to exactly 1 second
                 if waveform.size(0) > sample_rate:
                     waveform = waveform[:sample_rate]
                 else:
                     waveform = F.pad(waveform, (0, sample_rate - waveform.size(0)))
 
-                # Add channel dimension
                 waveform = waveform.unsqueeze(0)
+
                 mfcc = self.mfcc_transform(waveform)
+
+                # Normalize MFCC
+                mfcc = (mfcc - mfcc.mean()) / (mfcc.std() + 1e-6)
+
                 features.append(mfcc)
                 targets.append(label)
 

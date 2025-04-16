@@ -1,12 +1,15 @@
-import torch
-import torchaudio
-import torch.nn.functional as F
 from config import low_freq, high_freq
+
+import torch.nn.functional as F
+import torchaudio
+import torch
+
 
 class Predict:
     """
     Class for loading model weights and performing inference on a given audio file.
     """
+
     def __init__(self, model, device, mfcc_transform, index_to_label, weights_path=None):
         """
         Initializes the Predict class by optionally loading model weights.
@@ -52,9 +55,12 @@ class Predict:
 
         prediction = self.index_to_label[predicted_index]
         if record_label is None:
-            print(f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
+            print(
+                f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
         elif record_label == prediction:
-            print(f"File '{record_path}': Correct prediction. Label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
+            print(
+                f"File '{record_path}': Correct prediction. Label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m.")
         else:
-            print(f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m, expected '\033[1m{record_label}\033[0m'.")
+            print(
+                f"File '{record_path}': Predicted label '\033[1m{prediction}\033[0m' with confidence \033[1m{confidence:.2f}%\033[0m, expected '\033[1m{record_label}\033[0m'.")
         return prediction

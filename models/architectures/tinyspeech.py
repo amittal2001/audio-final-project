@@ -1,6 +1,7 @@
-import torch.nn as nn
-import torch.nn.functional as F
 from models.architectures.AttnCondenserBlock import AttnCondenserBlock
+
+import torch.nn.functional as F
+import torch.nn as nn
 
 
 class TinySpeechX(nn.Module):
@@ -169,9 +170,3 @@ class TinySpeechM(nn.Module):
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-
-if __name__ == '__main__':
-    # Example: Instantiate TinySpeechX with 35 classes and print parameter count.
-    model_x = TinySpeechX(num_classes=35)
-    print("Total parameters in TinySpeechX:", count_parameters(model_x))

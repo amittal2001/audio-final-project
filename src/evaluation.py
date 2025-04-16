@@ -1,12 +1,15 @@
+from config import seed, batch_size, split, high_freq, low_freq, n_mfcc, n_fft, hop_length, win_length, n_mels, center, \
+    sample_rate
+from models.architectures.tinyspeech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
+from classes.dataset import DataSet
+from classes.predict import Predict
+
+import torchaudio
 import argparse
-import os
 import random
 import torch
-import torchaudio
-from classes.dataset import DataSet
-from models.architectures.tinyspeech import TinySpeechX, TinySpeechY, TinySpeechZ, TinySpeechM
-from classes.predict import Predict
-from config import seed, batch_size, split, high_freq, low_freq, n_mfcc, n_fft, hop_length, win_length, n_mels, center, sample_rate
+import os
+
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained model on audio recordings.")
@@ -20,8 +23,8 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Instantiate dataset to retrieve the MFCC transform and label mapping.
     generator = torch.Generator().manual_seed(seed)
+
     dataset = DataSet(batch_size=batch_size,
                       split=split,
                       high_freq=high_freq,
@@ -36,7 +39,6 @@ def main():
                       generator=generator,
                       download=False)
 
-    # Select model architecture based on input argument.
     if args.model == 'TinySpeechX':
         model_class = TinySpeechX
     elif args.model == 'TinySpeechY':
@@ -45,6 +47,9 @@ def main():
         model_class = TinySpeechZ
     elif args.model == 'TinySpeechM':
         model_class = TinySpeechM
+    else:
+        print("Model architecture not recognized.")
+        return
 
     model = model_class(num_classes=len(dataset.labels)).to(device)
 
@@ -71,7 +76,6 @@ def main():
                 break
             sample = full_dataset[idx]
             waveform, sr, label, *_ = sample
-            # Save waveform to a temporary file for evaluation.
             temp_file = "temp_eval.wav"
             torchaudio.save(temp_file, waveform, sr)
             print(f"Processing sample with true label: '\033[1m{label}\033[0m'.")
@@ -82,6 +86,7 @@ def main():
             os.remove(temp_file)
         overall_accuracy = (correct / evaluated) * 100
         print(f"Overall accuracy on 10 random samples: \033[1m{correct}/{evaluated}\033[0m ({overall_accuracy:.2f}%).")
+
 
 if __name__ == "__main__":
     main()
